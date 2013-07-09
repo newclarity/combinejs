@@ -7,7 +7,7 @@
  * @see https://github.com/bspot/phpsourcemaps
  *
  * @author Mike Schinkel <mike@newclarity.net>
- * @version 1.0.1
+ * @version 1.0.2
  */
 
 $save_cwd = getcwd();
