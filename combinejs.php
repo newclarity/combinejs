@@ -10,11 +10,23 @@
  * @version 1.0
  */
 
-if ( isset( $argv[1] ) && is_dir( $argv[1] ) )
-  chdir( $argv[1] );
+if ( empty( $argv[1] ) ) {
+  $dir = getcwd() . '/example/js';
+} else if ( '/' ==  $argv[1][0] && is_dir( $argv[1] ) ) {
+  $dir = $argv[1];
+} else if ( ! is_dir( $dir = getcwd() . "/{$argv[1]}" ) ) {
+  echo "\nERROR: {$argv[1]} is not a valid directory.\n\n";
+  exit;
+}
+
+chdir( $dir );
 
 $script_files = new Script_Files();
 $script_files->generate();
+
+echo "\nSUCCESS! CombineJS combined these Javascript files:\n\n";
+echo implode( "\n", array_map( 'prefix_with_tab', $script_files->get_script_filepaths() ) );
+echo "\n\nInto {$script_files->output_filepath}.\n\n";
 
 /**
  * Class Script_Files
@@ -54,6 +66,14 @@ class Script_Files {
     $this->sourcemap_filepath = $this->output_filepath . '.map';
     $this->scripts_json_filepath = getcwd() . '/src/scripts.json';
   }
+
+  /**
+   * @return array
+   */
+  function get_script_filepaths() {
+    return $this->pluck( $this->_script_files, 'filepath' );
+  }
+
   /**
    *
    */
@@ -83,7 +103,7 @@ class Script_Files {
    */
   function generate_sourcemap() {
     Base64VLQ::initialize();
-    $script_filepaths = $this->pluck( $this->_script_files, 'filepath' );
+    $script_filepaths = $this->get_script_filepaths();
     $map = new SourceMap( $this->output_filepath, $script_filepaths );
     $offset = 0;
     foreach( $this->_script_files as $index => $script_file ) {
@@ -363,5 +383,9 @@ class Base64VLQ {
       Base64VLQ::$INT_TO_CHAR[$i] = $char;
     }
   }
+}
+
+function prefix_with_tab( $string ) {
+  return "\t{$string}";
 }
 
