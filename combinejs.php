@@ -7,13 +7,15 @@
  * @see https://github.com/bspot/phpsourcemaps
  *
  * @author Mike Schinkel <mike@newclarity.net>
- * @version 1.0
+ * @version 1.0.1
  */
 
+$save_cwd = getcwd();
+
 if ( empty( $argv[1] ) ) {
-  $dir = getcwd() . '/example/js';
+  $dir = getcwd();
 } else if ( '/' ==  $argv[1][0] && is_dir( $argv[1] ) ) {
-  $dir = $argv[1];
+    $dir = $argv[1];
 } else if ( ! is_dir( $dir = getcwd() . "/{$argv[1]}" ) ) {
   echo "\nERROR: {$argv[1]} is not a valid directory.\n\n";
   exit;
@@ -22,11 +24,21 @@ if ( empty( $argv[1] ) ) {
 chdir( $dir );
 
 $script_files = new Script_Files();
+$script_files->local_sourcemap = false !== strpos( implode( '|', $argv ), '--local' );
+if ( ! is_file( $script_files->scripts_json_filepath ) ) {
+  echo "\nERROR. No JSON file: {$script_files->scripts_json_filepath}.\n\n";
+  exit;
+}
+
 $script_files->generate();
 
+$map_type = $script_files->local_sourcemap ? "LOCAL" : "REMOTE";
 echo "\nSUCCESS! CombineJS combined these Javascript files:\n\n";
-echo implode( "\n", array_map( 'prefix_with_tab', $script_files->get_script_filepaths() ) );
-echo "\n\nInto {$script_files->output_filepath}.\n\n";
+echo implode( "\n", array_map( 'prefix_with_tab', $script_files->get_script_filepaths( 'filepath' ) ) );
+echo "\n\nInto a {$map_type} sourcemap:\n\n\t{$script_files->output_filepath}.\n\n";
+
+chdir( $save_cwd );
+exit;
 
 /**
  * Class Script_Files
@@ -54,6 +66,11 @@ class Script_Files {
   var $scripts_json_filepath;
 
   /**
+   * @var bool $local_sourcemap - Generate a web map by default, or a local one of true.
+   */
+  var $local_sourcemap = false;
+
+  /**
    * @var array $script_files - Array of
    */
   private $_script_files;
@@ -68,10 +85,15 @@ class Script_Files {
   }
 
   /**
+   * @param bool|string $property_name
    * @return array
    */
-  function get_script_filepaths() {
-    return $this->pluck( $this->_script_files, 'filepath' );
+  function get_script_filepaths( $property_name = false ) {
+
+    if ( ! $property_name )
+      $property_name =  $this->local_sourcemap ? 'filepath' : 'relative_filepath';
+
+    return $this->pluck( $this->_script_files, $property_name );
   }
 
   /**
@@ -104,7 +126,10 @@ class Script_Files {
   function generate_sourcemap() {
     Base64VLQ::initialize();
     $script_filepaths = $this->get_script_filepaths();
-    $map = new SourceMap( $this->output_filepath, $script_filepaths );
+
+    $output_filepath = $this->local_sourcemap ? $this->output_filepath : basename( $this->output_filepath );
+
+    $map = new SourceMap( $output_filepath, $script_filepaths );
     $offset = 0;
     foreach( $this->_script_files as $index => $script_file ) {
       for( $i=0; $i<$script_file->line_count; ++$i ) {
@@ -125,17 +150,23 @@ class Script_Files {
    * @return array
    */
   private function _load_json( $json_filepath ) {
+    $cwd = getcwd() . '/';
 
     $script_files = json_decode( file_get_contents( $json_filepath ) );
 
     foreach( $script_files as $index => $script ) {
-      $script_files[$index] = new Script_File( getcwd() . "/src/{$script}" );
+      if( is_file( $script_fullpath = ( $cwd . ( $script_file = "src/{$script}" ) ) ) ) {
+        $script_files[$index] = new Script_File( $script_file );
+      } else {
+        trigger_error( "\nERROR: {$script_fullpath} is not a valid file.\n\n", E_USER_NOTICE );
+        exit;
+      }
     }
 
-    if( is_file( $prefix_file = getcwd() . '/src/prefix.combinejs' ) )
+    if( is_file( $cwd . ( $prefix_file = 'src/prefix.combinejs' ) ) )
       array_unshift( $script_files, new Script_File( $prefix_file ) );
 
-    if( is_file( $postfix_file = getcwd() . '/src/postfix.combinejs' ) )
+    if( is_file( $cwd . ( $postfix_file = 'src/postfix.combinejs' ) ) )
       $script_files[] = new Script_File( $postfix_file );
 
     return $script_files;
@@ -168,12 +199,14 @@ class Script_File {
   var $filepath;
   var $contents;
   var $line_count;
+  var $relative_filepath;
 
   /**
-   * @param $filepath
+   * @param string $filepath
    */
   function __construct( $filepath ){
-    $this->filepath = $filepath;
+    $this->relative_filepath = ltrim( $filepath, '/' );
+    $this->filepath = getcwd() . "/{$this->relative_filepath}";
     $this->contents = rtrim( file_get_contents( $filepath ) );
     $this->line_count = count( explode( "\n", $this->contents ) );
   }
