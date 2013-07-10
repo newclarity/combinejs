@@ -7,8 +7,11 @@
  * @see https://github.com/bspot/phpsourcemaps
  *
  * @author Mike Schinkel <mike@newclarity.net>
- * @version 1.0.2
+ * @version 1.0.3
  */
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
 $save_cwd = getcwd();
 
@@ -18,7 +21,7 @@ if ( empty( $argv[1] ) ) {
     $dir = $argv[1];
 } else if ( ! is_dir( $dir = getcwd() . "/{$argv[1]}" ) ) {
   echo "\nERROR: {$argv[1]} is not a valid directory.\n\n";
-  exit;
+  die(1);
 }
 
 chdir( $dir );
@@ -27,7 +30,7 @@ $script_files = new Script_Files();
 $script_files->local_sourcemap = false !== strpos( implode( '|', $argv ), '--local' );
 if ( ! is_file( $script_files->scripts_json_filepath ) ) {
   echo "\nERROR. No JSON file: {$script_files->scripts_json_filepath}.\n\n";
-  exit;
+  die(2);
 }
 
 $script_files->generate();
@@ -153,13 +156,17 @@ class Script_Files {
     $cwd = getcwd() . '/';
 
     $script_files = json_decode( file_get_contents( $json_filepath ) );
+    if ( ! $script_files ) {
+      trigger_error( "\nERROR: {$json_filepath} is not a valid JSON file.\n\n", E_USER_NOTICE );
+      die(3);
+    }
 
     foreach( $script_files as $index => $script ) {
       if( is_file( $script_fullpath = ( $cwd . ( $script_file = "src/{$script}" ) ) ) ) {
         $script_files[$index] = new Script_File( $script_file );
       } else {
         trigger_error( "\nERROR: {$script_fullpath} is not a valid file.\n\n", E_USER_NOTICE );
-        exit;
+        die(4);
       }
     }
 
