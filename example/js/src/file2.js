@@ -1,6 +1,3 @@
-/**
- * Layered Modules - Models, Collections, Views
- */
 /*
  * Assign greeting
  */

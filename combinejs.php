@@ -7,10 +7,10 @@
  * @see https://github.com/bspot/phpsourcemaps
  *
  * @author Mike Schinkel <mike@newclarity.net>
- * @version 1.0.3
+ * @version 1.0.4
  */
 
-ini_set('display_errors', 1);
+ini_set('display_errors',1);
 error_reporting(E_ALL);
 
 $save_cwd = getcwd();
@@ -84,7 +84,7 @@ class Script_Files {
   function __construct() {
     $this->output_filepath =  getcwd() . '/scripts.js';
     $this->sourcemap_filepath = $this->output_filepath . '.map';
-    $this->scripts_json_filepath = getcwd() . '/src/scripts.json';
+    $this->scripts_json_filepath = getcwd() . '/scripts.json';
   }
 
   /**

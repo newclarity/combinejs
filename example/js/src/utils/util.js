@@ -4,7 +4,7 @@ app._transformify=function(s,re,rp){
 		x = s;
 		s = x.toLowerCase().replace(re,rp);
 	}
-	return s;
+	return s.replace(/[^\w\s]/gi, '');
 };
 app.dashify=function(s){
 	return app._transformify(s,/( |_|--)/g,'-');
