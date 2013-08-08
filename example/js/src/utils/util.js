@@ -7,9 +7,9 @@ app._transformify=function(s,re,rp){
 	return s.replace(/[^\w\s]/gi, '');
 };
 app.dashify=function(s){
-	return app._transformify(s,/( |_|--)/g,'-');
+	return app._transformify(s,/( |_|\\|\/|--)/g,'-');
 };
 app.underscorify=function(s){
-	return app._transformify(s,/( |-|__)/g,'_');
+	return app._transformify(s,/( |-|\\|\/|__)/g,'_');
 };
 

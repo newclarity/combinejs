@@ -1,6 +1,6 @@
 <?php
 /**
- * combinejs.php Combines all of the JS files listed in scripts.json in scripts.js.
+ * combinejs.php Combines all of the JS files listed in script.json in script.js.
  * To be used with FileWatchers in PhpStorm.
  *
  * Incorporate code from the excellent "PHP Source Maps" by @bspot on GitHub
@@ -28,8 +28,8 @@ chdir( $dir );
 
 $script_files = new Script_Files();
 $script_files->local_sourcemap = false !== strpos( implode( '|', $argv ), '--local' );
-if ( ! is_file( $script_files->scripts_json_filepath ) ) {
-  echo "\nERROR. No JSON file: {$script_files->scripts_json_filepath}.\n\n";
+if ( ! is_file( $script_files->script_json_filepath ) ) {
+  echo "\nERROR. No JSON file: {$script_files->script_json_filepath}.\n\n";
   die(2);
 }
 
@@ -52,21 +52,21 @@ class Script_Files {
 
   /**
    * @var string $output_filepath - Full path of output file.
-   * Defaults to getcwd() . /scripts.js
+   * Defaults to getcwd() . /script.js
    */
   var $output_filepath;
 
   /**
    * @var string $sourcemap_filepath - Full path of output file.
-   * Defaults to getcwd() . /scripts.js.map
+   * Defaults to getcwd() . /script.js.map
    */
   var $sourcemap_filepath;
 
   /**
    * @var string $files_json_filepath - Full path to .json file containing list of files to combine.
-   * Defaults to getcwd() . /src/scripts.js.map
+   * Defaults to getcwd() . /src/script.js.map
    */
-  var $scripts_json_filepath;
+  var $script_json_filepath;
 
   /**
    * @var bool $local_sourcemap - Generate a web map by default, or a local one of true.
@@ -82,9 +82,9 @@ class Script_Files {
    *
    */
   function __construct() {
-    $this->output_filepath =  getcwd() . '/scripts.js';
+    $this->output_filepath =  getcwd() . '/script.js';
     $this->sourcemap_filepath = $this->output_filepath . '.map';
-    $this->scripts_json_filepath = getcwd() . '/scripts.json';
+    $this->script_json_filepath = getcwd() . '/script.json';
   }
 
   /**
@@ -103,7 +103,7 @@ class Script_Files {
    *
    */
   function load_script_files() {
-    $this->_script_files = $this->_load_json( $this->scripts_json_filepath );
+    $this->_script_files = $this->_load_json( $this->script_json_filepath );
   }
   /**
    *
